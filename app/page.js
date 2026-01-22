@@ -82,9 +82,9 @@ export default function ReviewGeneratorPage() {
 
           <div className="max-w-3xl mx-auto relative z-10 text-center">
             {/* Logo */}
-            <div className="mb-6 flex justify-center">
+            {/* <div className="mb-6 flex justify-center">
               <img src={staticProfile.logo} alt="Logo" className="h-20 md:h-24 object-contain drop-shadow-sm" />
-            </div>
+            </div> */}
 
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-bold tracking-wider uppercase mb-6 border border-green-100 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
