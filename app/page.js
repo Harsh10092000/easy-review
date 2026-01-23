@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import PlatformCard from "./components/PlatformCard";
+import PlatformCard, { PlatformIcon } from "./components/PlatformCard";
 import SaveContactButton from "./components/SaveContactButton";
 import { siteConfig } from "./data/siteConfig";
 import { staticReviewsByPlatform } from "./data/reviewsData";
@@ -23,6 +23,7 @@ function ReviewPageContent() {
   const [profile, setProfile] = useState(null);
   const [platforms, setPlatforms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(null);
 
   // Static fallback profile
   const staticProfile = {
@@ -70,6 +71,9 @@ function ReviewPageContent() {
       reviews: staticReviewsByPlatform[p.id] || []
     }));
     setPlatforms(defaultPlatforms);
+    if (defaultPlatforms.length > 0) {
+      setActiveTab(defaultPlatforms[0].id || defaultPlatforms[0].name?.toLowerCase());
+    }
     setLoading(false);
   };
 
@@ -89,6 +93,7 @@ function ReviewPageContent() {
     }));
 
     setPlatforms(initialPlatforms);
+    if (initialPlatforms.length > 0) setActiveTab(initialPlatforms[0].id);
     generateReviewsForProfile(profileData, initialPlatforms);
   };
 
@@ -158,13 +163,13 @@ function ReviewPageContent() {
 
   const getPlatformColors = (name) => {
     const lower = (name || '').toLowerCase();
-    if (lower.includes('google')) return { primary: "#4285F4", secondary: "#E8F0FE", stars: "#FBBC05" };
-    if (lower.includes('facebook')) return { primary: "#1877F2", secondary: "#F0F2F5", stars: "#FF9F00" };
-    if (lower.includes('trustpilot')) return { primary: "#00B67A", secondary: "#F0FFF9", stars: "#00B67A" };
-    if (lower.includes('zomato')) return { primary: "#cb202d", secondary: "#fce9ea", stars: "#cb202d" };
-    if (lower.includes('tripadvisor')) return { primary: "#34E0A1", secondary: "#F0FFF9", stars: "#34E0A1" };
-    if (lower.includes('justdial')) return { primary: "#2196f3", secondary: "#e3f2fd", stars: "#ffc107" };
-    return { primary: "#333", secondary: "#f5f5f5", stars: "#daa520" };
+    if (lower.includes('google')) return { primary: "#EA4335", secondary: "#FEE8E7", stars: "#FBBC05", gradient: "linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853)" };
+    if (lower.includes('facebook')) return { primary: "#1877F2", secondary: "#F0F2F5", stars: "#FF9F00", gradient: "linear-gradient(135deg, #1877F2, #42a5f5)" };
+    if (lower.includes('instagram')) return { primary: "#E1306C", secondary: "#FCE4EC", stars: "#F56040", gradient: "linear-gradient(135deg, #FFDC80, #F56040, #C13584, #833AB4)" };
+    if (lower.includes('trustpilot')) return { primary: "#00B67A", secondary: "#F0FFF9", stars: "#00B67A", gradient: "linear-gradient(135deg, #00B67A, #00d68f)" };
+    if (lower.includes('justdial')) return { primary: "#2196f3", secondary: "#e3f2fd", stars: "#ffc107", gradient: "linear-gradient(135deg, #2196f3, #1976d2)" };
+    if (lower.includes('ambitionbox')) return { primary: "#6366F1", secondary: "#EEF2FF", stars: "#6366F1", gradient: "linear-gradient(135deg, #6366F1, #8B5CF6)" };
+    return { primary: "#333", secondary: "#f5f5f5", stars: "#daa520", gradient: "linear-gradient(135deg, #333, #666)" };
   };
 
   const currentProfile = profile || staticProfile;
@@ -234,23 +239,64 @@ function ReviewPageContent() {
               </div>
             ) : (
               <>
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                    Your Personal Feedback Assistant
-                  </h2>
-                  <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                    Choose a template below or write your own on your favorite platform.
-                  </p>
+
+
+                {/* Mobile Tabs */}
+                <div className="md:hidden sticky top-[60px] z-40 bg-white/95 backdrop-blur-sm mb-6 border-b border-gray-100 -mx-4 px-4 pt-4 pb-2">
+                  <div className="overflow-x-auto pb-2 scrollbar-hide pt-2 pl-1">
+                    <div className="flex gap-3">
+                      {platforms.map((platform) => (
+                        <button
+                          key={platform.id}
+                          onClick={() => {
+                            setActiveTab(platform.id);
+                            // Scroll to top of reviews section with offset for sticky header + tabs
+                            const reviewsElement = document.getElementById('reviews-section');
+                            if (reviewsElement) {
+                              const y = reviewsElement.getBoundingClientRect().top + window.scrollY - 160; // 140px offset
+                              window.scrollTo({ top: y, behavior: 'smooth' });
+                            }
+                          }}
+                          className={`flex items-center gap-2 px-4 py-2.5 rounded-full whitespace-nowrap transition-all duration-300 border ${activeTab === platform.id
+                            ? "bg-white border-blue-600 shadow-md ring-1 ring-blue-100 transform scale-105"
+                            : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                            }`}
+                        >
+                          <div className={`w-5 h-5 flex items-center justify-center rounded-full ${activeTab === platform.id ? "" : "opacity-70"}`}>
+                            <PlatformIcon platform={platform.icon} />
+                          </div>
+                          <span className={`text-sm font-semibold ${activeTab === platform.id ? "text-gray-900" : ""}`}>
+                            {platform.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-8">
-                  {platforms.map((platform) => (
-                    <PlatformCard
-                      key={platform.id || platform.name}
-                      platform={platform}
-                      isSinglePlatform={isSinglePlatform}
-                    />
-                  ))}
+                <div id="reviews-section" className="space-y-8 min-h-[50vh]">
+                  {/* Desktop View: Show All Stacked */}
+                  <div className="hidden md:block space-y-8">
+                    {platforms.map((platform) => (
+                      <PlatformCard
+                        key={platform.id || platform.name}
+                        platform={platform}
+                        isSinglePlatform={isSinglePlatform}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Mobile View: Show Active Tab Only */}
+                  <div className="md:hidden">
+                    {platforms.map((platform) => (
+                      <div key={platform.id} className={activeTab === platform.id ? "block animate-fadeIn" : "hidden"}>
+                        <PlatformCard
+                          platform={platform}
+                          isSinglePlatform={true}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </>
             )}

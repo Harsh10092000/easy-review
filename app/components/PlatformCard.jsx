@@ -4,7 +4,7 @@ import { useState } from "react";
 import ReviewCard from "./ReviewCard";
 
 // Platform icons
-const PlatformIcon = ({ platform }) => {
+export const PlatformIcon = ({ platform }) => {
     const icons = {
         google: (
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">

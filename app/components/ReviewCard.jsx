@@ -48,11 +48,19 @@ export default function ReviewCard({ review, colors, reviewUrl }) {
     };
 
     return (
-        <div className="group relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:-translate-y-1 flex flex-col h-full"
-            style={{ borderColor: copied ? theme.primary : '' }}>
+        <div
+            className="group relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 border-l-4 border border-gray-100 hover:-translate-y-1 flex flex-col h-full"
+            style={{
+                borderLeftColor: theme.primary,
+                borderColor: copied ? theme.primary : undefined
+            }}
+        >
 
-            {/* Gradient accent */}
-            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${theme.gradient} rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+            {/* Top accent bar with gradient */}
+            <div
+                className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl"
+                style={{ background: theme.gradient || theme.primary }}
+            />
 
             {/* Quote icon */}
             <div
