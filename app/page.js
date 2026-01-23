@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import PlatformCard from "./components/PlatformCard";
@@ -8,62 +9,145 @@ import SaveContactButton from "./components/SaveContactButton";
 import { siteConfig } from "./data/siteConfig";
 import { staticReviewsByPlatform } from "./data/reviewsData";
 
-export default function ReviewGeneratorPage() {
-  // Use static config for now (DB connection later)
+// Backend URL - Update for production
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8010";
+
+function ReviewPageContent() {
+  const searchParams = useSearchParams();
+
+  // Get slug from subdomain (middleware) OR from ?id= param (QR code)
+  const subdomain = searchParams.get('subdomain');
+  const idParam = searchParams.get('id');
+  const slug = subdomain || idParam; // Subdomain takes priority, fallback to ?id=
+
+  const [profile, setProfile] = useState(null);
+  const [platforms, setPlatforms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Static fallback profile
   const staticProfile = {
     businessName: siteConfig.business.name,
     phone: siteConfig.footer.contact.phone,
     email: siteConfig.footer.contact.email,
     address: siteConfig.footer.contact.address,
-    website: siteConfig.googleReviewUrl ? "https://landmarkplots.com" : null,
+    website: "https://landmarkplots.com",
     logo: siteConfig.header.logo,
     description: siteConfig.business.description,
   };
 
-  // Initialize platforms with static config
-  const initialPlatforms = siteConfig.platforms.map(platform => ({
-    ...platform,
-    reviews: staticReviewsByPlatform[platform.id] || []
-  }));
-
-  const [platforms, setPlatforms] = useState(initialPlatforms);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    async function fetchReviews() {
-      try {
-        // Fetch AI reviews for each platform
-        const platformPromises = initialPlatforms.map(async (platform) => {
-          try {
-            const response = await fetch(`/api/generate-reviews?platform=${platform.name}`);
-            const data = await response.json();
-
-            if (data.success && data.reviews?.length > 0) {
-              return { ...platform, reviews: data.reviews };
-            }
-          } catch (err) {
-            console.warn(`Failed to fetch reviews for ${platform.name}:`, err);
-          }
-          return platform;
-        });
-
-        const updatedPlatforms = await Promise.all(platformPromises);
-        setPlatforms(updatedPlatforms);
-      } catch (error) {
-        console.error("Fetch error:", error);
-      } finally {
-        setLoading(false);
-      }
+    if (slug) {
+      fetchProfile(slug);
+    } else {
+      // No subdomain or id, use static config
+      loadStaticConfig();
     }
+  }, [slug]);
 
-    fetchReviews();
-  }, []);
+  const fetchProfile = async (profileSlug) => {
+    try {
+      // Use internal Next.js API route (connects directly to DB)
+      const res = await fetch(`/api/profile/${profileSlug}`);
+      const data = await res.json();
 
+      if (data.success && data.profile) {
+        setProfile(data.profile);
+        initializePlatforms(data.profile);
+      } else {
+        // Profile not found, use static
+        loadStaticConfig();
+      }
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+      loadStaticConfig();
+    }
+  };
+
+  const loadStaticConfig = () => {
+    setProfile(staticProfile);
+    const defaultPlatforms = siteConfig.platforms.map(p => ({
+      ...p,
+      reviews: staticReviewsByPlatform[p.id] || []
+    }));
+    setPlatforms(defaultPlatforms);
+    setLoading(false);
+  };
+
+  const initializePlatforms = (profileData) => {
+    const profilePlatforms = profileData.platforms && profileData.platforms.length > 0
+      ? profileData.platforms
+      : siteConfig.platforms;
+
+    const initialPlatforms = profilePlatforms.map(p => ({
+      id: p.name?.toLowerCase() || p.id,
+      name: p.name,
+      icon: p.name?.toLowerCase() || p.icon,
+      reviewUrl: p.url || p.reviewUrl,
+      buttonText: `Review on ${p.name}`,
+      colors: getPlatformColors(p.name),
+      reviews: []
+    }));
+
+    setPlatforms(initialPlatforms);
+    generateReviewsForProfile(profileData, initialPlatforms);
+  };
+
+  const generateReviewsForProfile = async (profileData, currentPlatforms) => {
+    try {
+      const platformPromises = currentPlatforms.map(async (platform) => {
+        try {
+          const query = new URLSearchParams({
+            platform: platform.name,
+            businessName: profileData.businessName || profileData.business_name,
+            businessType: profileData.businessType || profileData.business_type || 'business',
+            language: profileData.languagePref || profileData.language_pref || 'English',
+            location: [profileData.city, profileData.state].filter(Boolean).join(', ') || 'India',
+            description: profileData.description || '',
+            keywords: profileData.keywords || '',
+            ts: Date.now()
+          });
+
+          const response = await fetch(`/api/generate-reviews?${query.toString()}`, {
+            cache: 'no-store',
+            headers: { 'Pragma': 'no-cache' }
+          });
+          const data = await response.json();
+
+          if (data.success && data.reviews?.length > 0) {
+            return { ...platform, reviews: data.reviews };
+          }
+        } catch (err) {
+          console.warn(`Failed to generate reviews for ${platform.name}:`, err);
+        }
+        return platform;
+      });
+
+      const updatedPlatforms = await Promise.all(platformPromises);
+      setPlatforms(updatedPlatforms);
+    } catch (error) {
+      console.error("AI Generation error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPlatformColors = (name) => {
+    const lower = (name || '').toLowerCase();
+    if (lower.includes('google')) return { primary: "#4285F4", secondary: "#E8F0FE", stars: "#FBBC05" };
+    if (lower.includes('facebook')) return { primary: "#1877F2", secondary: "#F0F2F5", stars: "#FF9F00" };
+    if (lower.includes('trustpilot')) return { primary: "#00B67A", secondary: "#F0FFF9", stars: "#00B67A" };
+    if (lower.includes('zomato')) return { primary: "#cb202d", secondary: "#fce9ea", stars: "#cb202d" };
+    if (lower.includes('tripadvisor')) return { primary: "#34E0A1", secondary: "#F0FFF9", stars: "#34E0A1" };
+    if (lower.includes('justdial')) return { primary: "#2196f3", secondary: "#e3f2fd", stars: "#ffc107" };
+    return { primary: "#333", secondary: "#f5f5f5", stars: "#daa520" };
+  };
+
+  const currentProfile = profile || staticProfile;
   const isSinglePlatform = platforms.length === 1;
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Header />
+      <Header profile={currentProfile} />
 
       <main className="flex-1 pt-20 md:pt-24">
         {/* Hero Section */}
@@ -82,9 +166,11 @@ export default function ReviewGeneratorPage() {
 
           <div className="max-w-3xl mx-auto relative z-10 text-center">
             {/* Logo */}
-            {/* <div className="mb-6 flex justify-center">
-              <img src={staticProfile.logo} alt="Logo" className="h-20 md:h-24 object-contain drop-shadow-sm" />
-            </div> */}
+            {currentProfile?.logo && (
+              <div className="mb-6 flex justify-center">
+                <img src={currentProfile.logo} alt="Logo" className="h-20 md:h-24 object-contain drop-shadow-sm" />
+              </div>
+            )}
 
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-bold tracking-wider uppercase mb-6 border border-green-100 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -100,13 +186,13 @@ export default function ReviewGeneratorPage() {
             </h1>
 
             <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
-              Thank you for scanning! We have drafted some personal reviews for you. <br className="hidden md:block" />
+              Thank you for visiting <strong>{currentProfile?.businessName}</strong>! <br className="hidden md:block" />
               <span className="font-medium text-gray-900">Select, Copy, and Post</span> on your favorite platform.
             </p>
 
-            {/* Save Contact Button - Uses Static Profile Data */}
+            {/* Save Contact Button */}
             <div className="flex justify-center transform transition-transform hover:scale-105 duration-200">
-              <SaveContactButton profile={staticProfile} />
+              <SaveContactButton profile={currentProfile} />
             </div>
           </div>
         </section>
@@ -134,7 +220,7 @@ export default function ReviewGeneratorPage() {
                 <div className="space-y-8">
                   {platforms.map((platform) => (
                     <PlatformCard
-                      key={platform.id}
+                      key={platform.id || platform.name}
                       platform={platform}
                       isSinglePlatform={isSinglePlatform}
                     />
@@ -146,7 +232,19 @@ export default function ReviewGeneratorPage() {
         </section>
       </main>
 
-      <Footer />
+      <Footer profile={currentProfile} />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-[#0066FF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ReviewPageContent />
+    </Suspense>
   );
 }

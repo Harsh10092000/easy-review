@@ -21,8 +21,8 @@ export function buildPrompt(config, platform = "Google") {
         businessName = "a local business",
         businessType = "service",
         location = "India",
-        areas = [],
-        propertyTypes = [],
+        keywords = "",
+        description = "",
         reviewCount = 5,
         language = "English"
     } = config;
@@ -51,6 +51,16 @@ export function buildPrompt(config, platform = "Google") {
             - AVOID: Formal language, strict corporate tone.
             `;
             break;
+        case "instagram":
+            platformInstruction = `
+            PLATFORM: INSTAGRAM
+            STYLE: Short, catchy, story-like, visually expressive.
+            - USE EMOJIS: Yes (2-3 per review, relevant emojis like ⭐💯🔥).
+            - TONE: "This place is amazing!", "10/10 would recommend", "Best experience ever 💫"
+            - KEYWORDS: Vibe, aesthetic, must-visit, love it, fire, goals.
+            - FORMAT: Keep reviews SHORT (2-3 lines max). Instagram-friendly captions.
+            `;
+            break;
         case "trustpilot":
             platformInstruction = `
             PLATFORM: TRUSTPILOT
@@ -61,22 +71,24 @@ export function buildPrompt(config, platform = "Google") {
             - AVOID: Slang, emojis, overly casual language.
             `;
             break;
-        case "tripadvisor":
+        case "justdial":
             platformInstruction = `
-            PLATFORM: TRIPADVISOR
-            STYLE: Traveler/Visitor perspective, descriptive.
-            - USE EMOJIS: Minimal.
-            - TONE: "Visited recently...", "Great atmosphere...", "Must visit place..."
-            - KEYWORDS: Experience, atmosphere, visit, location, view, vibes.
+            PLATFORM: JUSTDIAL
+            STYLE: Local Indian customer perspective, practical.
+            - USE EMOJIS: Minimal (0-1).
+            - TONE: "Good service provider...", "Contacted through Justdial...", "Prompt response..."
+            - KEYWORDS: Service, response time, helpful, value for money, professional.
+            - CONTEXT: Reviews like a local Indian customer searching for services.
             `;
             break;
-        case "zomato":
+        case "ambitionbox":
             platformInstruction = `
-            PLATFORM: ZOMATO
-            STYLE: Foodie, taste-focused, enthusiastic.
-            - USE EMOJIS: Yes (food emojis).
-            - TONE: "The taste was amazing...", "Service was quick...", "Best place for..."
-            - KEYWORDS: Taste, ambiance, service, menu, flavor, delicious.
+            PLATFORM: AMBITIONBOX (Company Reviews)
+            STYLE: Employee/professional perspective, balanced work culture review.
+            - USE EMOJIS: NO.
+            - TONE: "Great workplace...", "Good work-life balance...", "Supportive management..."
+            - KEYWORDS: Work culture, team, growth, management, salary, learning, environment.
+            - FOCUS: Work experience, company culture, career growth, team collaboration.
             `;
             break;
         case "google":
@@ -100,6 +112,11 @@ export function buildPrompt(config, platform = "Google") {
         languageInstruction = "LANGUAGE: Write in Natural, Native English. Varied sentence structure.";
     }
 
+    // Custom keywords instruction (if provided)
+    const keywordsInstruction = keywords
+        ? `6. MUST INCLUDE these keywords naturally in reviews: ${keywords}`
+        : "";
+
     return `
 You are a customer review generator engine.
 TASK: Generate ${reviewCount} UNIQUE 5-star reviews for the following business.
@@ -108,6 +125,7 @@ BUSINESS DETAILS:
 - Name: "${businessName}"
 - Type: ${businessType}
 - Location: ${location}
+${description ? `- About: ${description}` : ""}
 
 ${platformInstruction}
 
@@ -119,6 +137,7 @@ IMPORTANT CONSTRAINTS:
 3. Authenticity: vary the length (some short, some long).
 4. FOCUS TOPICS (Mix these in): ${selectedTopics}.
 5. Seed ID: ${seed}.
+${keywordsInstruction}
 
 OUTPUT FORMAT EXAMPLE:
 ["Review 1 text...", "Review 2 text..."]

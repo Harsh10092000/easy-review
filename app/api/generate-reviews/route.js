@@ -11,16 +11,19 @@ export async function GET(request) {
         const businessName = searchParams.get("businessName") || siteConfig.business.name;
         const businessType = searchParams.get("businessType") || siteConfig.business.type;
         const language = searchParams.get("language") || "English";
+        const location = searchParams.get("location") || "India";
+        const description = searchParams.get("description") || "";
+        const keywords = searchParams.get("keywords") || "";
 
         // Build config using dynamic or static data
         const config = {
             businessName,
             businessType: businessType === "real_estate" ? "real estate" : businessType,
-            location: "Kurukshetra, Haryana", // Could be dynamic if added to profile later
-            areas: siteConfig.business.areas, // Keep static for now or can be dynamic
-            propertyTypes: siteConfig.business.propertyTypes, // Keep static for now
+            location,
+            description,
+            keywords,
             reviewCount: 9,
-            language // Pass language to config
+            language
         };
 
         // Generate AI reviews
