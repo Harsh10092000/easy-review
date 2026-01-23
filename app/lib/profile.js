@@ -10,8 +10,8 @@ export async function getProfileBySlug(slug) {
 
     try {
         const [rows] = await pool.query(
-            "SELECT * FROM business_profiles WHERE slug = ?",
-            [slug]
+            "SELECT * FROM business_profiles WHERE slug = ? OR subdomain = ? OR qr_token = ?",
+            [slug, slug, slug]
         );
 
         if (rows.length === 0) {
@@ -43,7 +43,10 @@ export async function getProfileBySlug(slug) {
             website: row.website,
             googleMapsLink: row.google_maps_link,
             description: row.description,
-            keywords: row.keywords
+            description: row.description,
+            keywords: row.keywords,
+            subdomain: row.subdomain,
+            qr_token: row.qr_token
         };
     } catch (error) {
         console.error("Database query error:", error);
