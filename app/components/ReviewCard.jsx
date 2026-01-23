@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { siteConfig } from "../data/siteConfig";
 
-export default function ReviewCard({ review, colors }) {
+export default function ReviewCard({ review, colors, reviewUrl }) {
     const [copied, setCopied] = useState(false);
 
     // Default colors if not provided
@@ -22,8 +21,10 @@ export default function ReviewCard({ review, colors }) {
             // Reset copied state after animation
             setTimeout(() => {
                 setCopied(false);
-                // Redirect to Google Reviews (or specific platform logic if needed)
-                window.open(siteConfig.googleReviewUrl, "_blank");
+                // Redirect to platform review URL (dynamic from DB)
+                if (reviewUrl) {
+                    window.open(reviewUrl, "_blank");
+                }
             }, 800);
         } catch (err) {
             console.error("Failed to copy text:", err);

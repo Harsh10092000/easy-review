@@ -32,7 +32,7 @@ export async function getProfileBySlug(slug) {
             headerConfig: safeJsonParse(row.header_config),
             footerConfig: safeJsonParse(row.footer_config),
             platforms: safeJsonParse(row.platforms),
-            languagePref: row.language_pref || 'English',
+            languagePref: safeJsonParse(row.language_pref) || ['English'],
             promptConfig: safeJsonParse(row.prompt_config),
             address: row.address,
             city: row.city,

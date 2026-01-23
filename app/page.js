@@ -94,27 +94,52 @@ function ReviewPageContent() {
 
   const generateReviewsForProfile = async (profileData, currentPlatforms) => {
     try {
+      // Get selected languages (array or string)
+      let languages = profileData.languagePref || profileData.language_pref || ['English'];
+      if (typeof languages === 'string') {
+        try { languages = JSON.parse(languages); } catch { languages = [languages]; }
+      }
+      if (!Array.isArray(languages) || languages.length === 0) {
+        languages = ['English'];
+      }
+
       const platformPromises = currentPlatforms.map(async (platform) => {
         try {
-          const query = new URLSearchParams({
-            platform: platform.name,
-            businessName: profileData.businessName || profileData.business_name,
-            businessType: profileData.businessType || profileData.business_type || 'business',
-            language: profileData.languagePref || profileData.language_pref || 'English',
-            location: [profileData.city, profileData.state].filter(Boolean).join(', ') || 'India',
-            description: profileData.description || '',
-            keywords: profileData.keywords || '',
-            ts: Date.now()
-          });
+          // Generate reviews for all selected languages
+          const allReviews = [];
+          const reviewsPerLanguage = Math.ceil(9 / languages.length);
 
-          const response = await fetch(`/api/generate-reviews?${query.toString()}`, {
-            cache: 'no-store',
-            headers: { 'Pragma': 'no-cache' }
-          });
-          const data = await response.json();
+          for (const lang of languages) {
+            const query = new URLSearchParams({
+              platform: platform.name,
+              businessName: profileData.businessName || profileData.business_name,
+              businessType: profileData.businessType || profileData.business_type || 'business',
+              language: lang,
+              location: [profileData.city, profileData.state].filter(Boolean).join(', ') || 'India',
+              description: profileData.description || '',
+              keywords: profileData.keywords || '',
+              reviewCount: reviewsPerLanguage,
+              ts: Date.now()
+            });
 
-          if (data.success && data.reviews?.length > 0) {
-            return { ...platform, reviews: data.reviews };
+            const response = await fetch(`/api/generate-reviews?${query.toString()}`, {
+              cache: 'no-store',
+              headers: { 'Pragma': 'no-cache' }
+            });
+            const data = await response.json();
+
+            if (data.success && data.reviews?.length > 0) {
+              // Add language tag to each review
+              const taggedReviews = data.reviews.map(r => ({
+                ...r,
+                language: lang
+              }));
+              allReviews.push(...taggedReviews);
+            }
+          }
+
+          if (allReviews.length > 0) {
+            return { ...platform, reviews: allReviews };
           }
         } catch (err) {
           console.warn(`Failed to generate reviews for ${platform.name}:`, err);
@@ -165,10 +190,10 @@ function ReviewPageContent() {
           </div>
 
           <div className="max-w-3xl mx-auto relative z-10 text-center">
-            {/* Logo */}
+            {/* Logo - Smaller Size */}
             {currentProfile?.logo && (
-              <div className="mb-6 flex justify-center">
-                <img src={currentProfile.logo} alt="Logo" className="h-20 md:h-24 object-contain drop-shadow-sm" />
+              <div className="mb-4 flex justify-center">
+                <img src={currentProfile.logo} alt="Logo" className="h-12 md:h-16 object-contain drop-shadow-sm" />
               </div>
             )}
 
@@ -190,10 +215,11 @@ function ReviewPageContent() {
               <span className="font-medium text-gray-900">Select, Copy, and Post</span> on your favorite platform.
             </p>
 
-            {/* Save Contact Button */}
+            {/* Save Contact Button - Hidden for now
             <div className="flex justify-center transform transition-transform hover:scale-105 duration-200">
               <SaveContactButton profile={currentProfile} />
             </div>
+            */}
           </div>
         </section>
 

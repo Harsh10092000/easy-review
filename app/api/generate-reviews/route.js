@@ -14,6 +14,7 @@ export async function GET(request) {
         const location = searchParams.get("location") || "India";
         const description = searchParams.get("description") || "";
         const keywords = searchParams.get("keywords") || "";
+        const reviewCount = parseInt(searchParams.get("reviewCount")) || 9;
 
         // Build config using dynamic or static data
         const config = {
@@ -22,7 +23,7 @@ export async function GET(request) {
             location,
             description,
             keywords,
-            reviewCount: 9,
+            reviewCount,
             language
         };
 
