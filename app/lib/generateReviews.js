@@ -142,7 +142,13 @@ IMPORTANT CONSTRAINTS:
 7. Uniqueness: Each review must be completely different in structure and length.
 8. FOCUS TOPICS (Mix these in): ${selectedTopics}.
 9. Seed ID: ${seed}.
-${keywordsInstruction}
+145: ${keywordsInstruction}
+146: 
+147: CRITICAL:
+148: - DO NOT output anything else.
+149: - DO NOT say "Here are the reviews".
+150: - DO NOT use markdown formatting like **bold** or *italics*.
+151: - START DIRECTLY with the first review text.
 
 OUTPUT EXAMPLE:
 My experience was great, I really liked... ||| I visited last week and it was amazing... ||| The staff is very helpful...

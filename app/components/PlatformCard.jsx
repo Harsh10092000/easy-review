@@ -142,7 +142,7 @@ export default function PlatformCard({ platform, isSinglePlatform = false, isLoa
 
             {/* View More / Show Less Button */}
             {!isLoading && showViewMore && hasMoreReviews && (
-                <div className="text-center mt-6">
+                <div className="text-center mt-6 hidden sm:flex">
                     <button
                         onClick={() => setExpanded(!expanded)}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-full transition-all duration-300"
