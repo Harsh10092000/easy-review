@@ -59,18 +59,19 @@ export const PlatformIcon = ({ platform }) => {
  * Platform Card Component
  * Displays reviews for a single platform with View More functionality
  */
-export default function PlatformCard({ platform, isSinglePlatform = false }) {
+export default function PlatformCard({ platform, isSinglePlatform = false, isLoading = false }) {
     const [expanded, setExpanded] = useState(false);
 
     const initialCount = isSinglePlatform ? 9 : 3;
     const expandedCount = 9;
 
     const visibleReviews = expanded
-        ? platform.reviews.slice(0, expandedCount)
-        : platform.reviews.slice(0, initialCount);
+        ? platform.reviews?.slice(0, expandedCount) || []
+        : platform.reviews?.slice(0, initialCount) || [];
 
-    const hasMoreReviews = platform.reviews.length > (expanded ? expandedCount : initialCount);
-    const showViewMore = !isSinglePlatform || platform.reviews.length > initialCount;
+    const hasMoreReviews = (platform.reviews?.length || 0) > (expanded ? expandedCount : initialCount);
+    // Only show view more if we have actual reviews covering the limit
+    const showViewMore = (!isSinglePlatform || (platform.reviews?.length || 0) > initialCount);
 
     return (
         <div className="mb-12 border-b border-gray-100 pb-12 last:border-0 last:pb-0">
@@ -81,7 +82,14 @@ export default function PlatformCard({ platform, isSinglePlatform = false }) {
                         <PlatformIcon platform={platform.icon} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-gray-900">{platform.name}</h3>
+                        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                            {platform.name}
+                            {isLoading && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 animate-pulse">
+                                    Generating...
+                                </span>
+                            )}
+                        </h3>
                     </div>
                 </div>
 
@@ -102,18 +110,38 @@ export default function PlatformCard({ platform, isSinglePlatform = false }) {
 
             {/* Reviews Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {visibleReviews.map((review) => (
-                    <ReviewCard
-                        key={review.id}
-                        review={review}
-                        colors={platform.colors}
-                        reviewUrl={platform.reviewUrl}
-                    />
-                ))}
+                {isLoading && platform.reviews?.length === 0 ? (
+                    // SKELETON LOADER
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+                                <div className="space-y-2">
+                                    <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                                    <div className="h-3 w-16 bg-gray-200 rounded"></div>
+                                </div>
+                            </div>
+                            <div className="space-y-2 mb-4">
+                                <div className="h-4 w-full bg-gray-200 rounded"></div>
+                                <div className="h-4 w-5/6 bg-gray-200 rounded"></div>
+                                <div className="h-4 w-4/6 bg-gray-200 rounded"></div>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    visibleReviews.map((review) => (
+                        <ReviewCard
+                            key={review.id}
+                            review={review}
+                            colors={platform.colors}
+                            reviewUrl={platform.reviewUrl}
+                        />
+                    ))
+                )}
             </div>
 
             {/* View More / Show Less Button */}
-            {showViewMore && hasMoreReviews && (
+            {!isLoading && showViewMore && hasMoreReviews && (
                 <div className="text-center mt-6">
                     <button
                         onClick={() => setExpanded(!expanded)}

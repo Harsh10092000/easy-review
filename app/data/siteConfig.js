@@ -4,6 +4,7 @@ export const siteConfig = {
     header: {
         logo: "/logo.png", // Update with actual logo path
         logoAlt: "Landmark Properties",
+        favicon: "https://www.bizease.com/assets/img//favicon.ico", // Global Favicon
         navigation: [
             { label: "Home", href: "/" },
             { label: "About", href: "/about" },

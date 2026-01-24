@@ -14,6 +14,7 @@ const genAI = process.env.GOOGLE_GEMINI_API_KEY
     : null;
 
 // Models to try in order (best free tier options)
+// Models to try in order (Prioritizing Speed)
 const MODELS = [
     "gemini-2.5-flash-lite-preview-09-2025",
     "gemini-3-flash-preview",

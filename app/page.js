@@ -20,6 +20,7 @@ function ReviewPageContent() {
   const idParam = searchParams.get('id');
   const slug = subdomain || idParam; // Subdomain takes priority, fallback to ?id=
 
+  const [notFound, setNotFound] = useState(false);
   const [profile, setProfile] = useState(null);
   const [platforms, setPlatforms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,12 +56,14 @@ function ReviewPageContent() {
         setProfile(data.profile);
         initializePlatforms(data.profile);
       } else {
-        // Profile not found, use static
-        loadStaticConfig();
+        // Profile explicitly not found
+        setNotFound(true);
+        setLoading(false);
       }
     } catch (err) {
       console.error("Profile fetch error:", err);
-      loadStaticConfig();
+      setNotFound(true);
+      setLoading(false);
     }
   };
 
@@ -78,9 +81,8 @@ function ReviewPageContent() {
   };
 
   const initializePlatforms = (profileData) => {
-    const profilePlatforms = profileData.platforms && profileData.platforms.length > 0
-      ? profileData.platforms
-      : siteConfig.platforms;
+    // Strictly use DB platforms. If null/undefined, assume empty (do NOT fallback to demo config)
+    const profilePlatforms = profileData.platforms || [];
 
     const initialPlatforms = profilePlatforms.map(p => ({
       id: p.name?.toLowerCase() || p.id,
@@ -89,17 +91,23 @@ function ReviewPageContent() {
       reviewUrl: p.url || p.reviewUrl,
       buttonText: `Review on ${p.name}`,
       colors: getPlatformColors(p.name),
-      reviews: []
+      reviews: [],
+      isLoading: true // Start in loading state for optimistic UI
     }));
 
     setPlatforms(initialPlatforms);
     if (initialPlatforms.length > 0) setActiveTab(initialPlatforms[0].id);
+
+    // Stop page loading immediately so skeletons show up
+    setLoading(false);
+
+    // Start streaming generation
     generateReviewsForProfile(profileData, initialPlatforms);
   };
 
   const generateReviewsForProfile = async (profileData, currentPlatforms) => {
     try {
-      // Get selected languages (array or string)
+      // Get selected languages
       let languages = profileData.languagePref || profileData.language_pref || ['English'];
       if (typeof languages === 'string') {
         try { languages = JSON.parse(languages); } catch { languages = [languages]; }
@@ -108,56 +116,67 @@ function ReviewPageContent() {
         languages = ['English'];
       }
 
-      const platformPromises = currentPlatforms.map(async (platform) => {
-        try {
-          // Generate reviews for all selected languages
-          const allReviews = [];
-          const reviewsPerLanguage = Math.ceil(9 / languages.length);
+      // We only support streaming for the primary language for now to simpler UI updates
+      const lang = languages[0];
 
-          for (const lang of languages) {
-            const query = new URLSearchParams({
-              platform: platform.name,
-              businessName: profileData.businessName || profileData.business_name,
-              businessType: profileData.businessType || profileData.business_type || 'business',
-              language: lang,
-              location: [profileData.city, profileData.state].filter(Boolean).join(', ') || 'India',
-              description: profileData.description || '',
-              keywords: profileData.keywords || '',
-              reviewCount: reviewsPerLanguage,
-              ts: Date.now()
-            });
-
-            const response = await fetch(`/api/generate-reviews?${query.toString()}`, {
-              cache: 'no-store',
-              headers: { 'Pragma': 'no-cache' }
-            });
-            const data = await response.json();
-
-            if (data.success && data.reviews?.length > 0) {
-              // Add language tag to each review
-              const taggedReviews = data.reviews.map(r => ({
-                ...r,
-                language: lang
-              }));
-              allReviews.push(...taggedReviews);
-            }
-          }
-
-          if (allReviews.length > 0) {
-            return { ...platform, reviews: allReviews };
-          }
-        } catch (err) {
-          console.warn(`Failed to generate reviews for ${platform.name}:`, err);
-        }
-        return platform;
+      const query = new URLSearchParams({
+        businessName: profileData.businessName || profileData.business_name,
+        businessType: profileData.businessType || profileData.business_type || 'business',
+        ownerName: profileData.promptConfig?.ownerName || '',
+        language: lang,
+        location: [profileData.city, profileData.state].filter(Boolean).join(', ') || 'India',
+        description: profileData.description || '',
+        keywords: profileData.keywords || '',
+        reviewCount: 9, // Request more reviews per platform
+        platforms: currentPlatforms.map(p => p.name).join(',') // Send active platforms
       });
 
-      const updatedPlatforms = await Promise.all(platformPromises);
-      setPlatforms(updatedPlatforms);
+      // Start Stream
+      const response = await fetch(`/api/generate-reviews?${query.toString()}`);
+
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.success && data.platform && data.reviews) {
+                // Update specific platform with new reviews
+                setPlatforms(prev => prev.map(p => {
+                  if (p.name.toLowerCase() === data.platform.toLowerCase()) {
+                    return {
+                      ...p,
+                      reviews: [...p.reviews, ...data.reviews],
+                      isLoading: false // Stop skeleton
+                    };
+                  }
+                  return p;
+                }));
+              }
+            } catch (e) {
+              console.error("Error parsing stream chunk", e);
+            }
+          }
+        }
+      }
+
+      // Ensure all loading states are cleared at end (cleanup)
+      setPlatforms(prev => prev.map(p => ({ ...p, isLoading: false })));
+
     } catch (error) {
-      console.error("AI Generation error:", error);
-    } finally {
-      setLoading(false);
+      console.error("Streaming error:", error);
+      setPlatforms(prev => prev.map(p => ({ ...p, isLoading: false })));
     }
   };
 
@@ -174,6 +193,27 @@ function ReviewPageContent() {
 
   const currentProfile = profile || staticProfile;
   const isSinglePlatform = platforms.length === 1;
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 text-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
+          <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h1>
+          <p className="text-gray-600 mb-6">
+            The requested business profile could not be found. Please check the URL.
+          </p>
+          <div className="text-sm text-gray-500 font-medium bg-gray-50 py-3 rounded-lg border border-gray-100">
+            Contact Admin for support
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -232,10 +272,20 @@ function ReviewPageContent() {
         <section className="py-12 md:py-16 px-4 bg-gray-50">
           <div className="max-w-7xl mx-auto">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <div className="w-16 h-16 border-4 border-[#0066FF] border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-gray-600 text-lg">Generating personalized reviews...</p>
-                <p className="text-gray-400 text-sm mt-2">AI is creating unique content for you</p>
+              <div className="space-y-8 min-h-[50vh]">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="w-12 h-12 rounded-2xl bg-gray-200" />
+                      <div className="h-6 w-32 bg-gray-200 rounded" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {[1, 2, 3].map((j) => (
+                        <div key={j} className="h-40 bg-gray-100 rounded-xl" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <>
@@ -282,6 +332,7 @@ function ReviewPageContent() {
                         key={platform.id || platform.name}
                         platform={platform}
                         isSinglePlatform={isSinglePlatform}
+                        isLoading={platform.isLoading}
                       />
                     ))}
                   </div>
@@ -293,6 +344,7 @@ function ReviewPageContent() {
                         <PlatformCard
                           platform={platform}
                           isSinglePlatform={true}
+                          isLoading={platform.isLoading}
                         />
                       </div>
                     ))}
