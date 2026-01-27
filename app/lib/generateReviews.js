@@ -118,8 +118,8 @@ export function buildPrompt(config, platform = "Google") {
         : "";
 
     return `
-You are a customer review generator engine.
-TASK: Generate ${reviewCount} UNIQUE 5-star reviews for the following business.
+SYSTEM: You are a strict review generation engine. You do NOT speak. You ONLY output the reviews separated by "|||".
+USER: Generate ${reviewCount} UNIQUE 5-star reviews for the following business.
 
 BUSINESS DETAILS:
 - Name: "${businessName}"
@@ -262,9 +262,29 @@ export async function streamPlatformReviews(config, platform, onReview) {
         for await (const chunk of generateWithGroqStream(prompt)) {
             buffer += chunk;
 
-            // Check for delimiter
+            // STRIP CONVERSATIONAL FILLER (e.g. "Here are the reviews: ...")
+            // If buffer doesn't look like a review yet, we might want to trim prefix
+            // Strategy: Look for "|||" or newlines that separate the intro. 
+            // Better: If buffer starts with something that isn't a review, try to clean it.
+            // Simple heuristic: If "|||" exists, ignore everything before the first one if it looks like garbage.
+
             if (buffer.includes("|||")) {
-                const parts = buffer.split("|||");
+                let parts = buffer.split("|||");
+
+                // Aggressive cleaning: 
+                // If the FIRST part acts like a conversational intro (contains "Here is", "Sure", etc), drop it.
+                // But only if we have more than 1 part or if the first part is clearly NOT a review.
+                if (reviewIndex === 0 && parts.length > 0) {
+                    const firstPartLower = parts[0].toLowerCase().trim();
+                    if (firstPartLower.includes("here are") ||
+                        firstPartLower.includes("sure,") ||
+                        firstPartLower.includes("i have generated") ||
+                        firstPartLower.includes("certainly")) {
+                        // DISCARD the conversational intro part
+                        parts.shift();
+                    }
+                }
+
                 // Process all complete parts (except the last one which might be partial)
                 while (parts.length > 1) {
                     const reviewText = parts.shift().trim();
@@ -279,8 +299,15 @@ export async function streamPlatformReviews(config, platform, onReview) {
         }
 
         // Flush remaining buffer
-        if (buffer.trim().length > 10) {
-            onReview(formatReviews([buffer.trim()], "groq")[0]);
+        // If the entire response was one chunk without ||| (rare but possible for 1 review)
+        let finalReview = buffer.trim();
+        const introMatch = finalReview.match(/^(Here are|Sure|I have|Certainly)[\s\S]*?(:|\.)\s*/i);
+        if (introMatch) {
+            finalReview = finalReview.replace(introMatch[0], "").trim();
+        }
+
+        if (finalReview.length > 10) {
+            onReview(formatReviews([finalReview], "groq")[0]);
         }
         return true; // Success
 
@@ -328,7 +355,7 @@ export async function generateMultiPlatformReviews(config, platforms) {
     platforms.forEach(p => jsonStructure[p] = ["Review 1...", "Review 2..."]);
 
     const prompt = `
-You are a customer review generator engine.
+SYSTEM: You are a strict review generation engine. You do NOT speak. You ONLY output the reviews separated by "|||".
 TASK: Generate ${reviewCount} UNIQUE 5-star reviews for EACH of the following platforms: ${platformList}.
 
 BUSINESS DETAILS:

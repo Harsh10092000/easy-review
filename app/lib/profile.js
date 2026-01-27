@@ -10,7 +10,10 @@ export async function getProfileBySlug(slug) {
 
     try {
         const [rows] = await pool.query(
-            "SELECT * FROM business_profiles WHERE slug = ? OR subdomain = ? OR qr_token = ?",
+            `SELECT bp.*, u.is_active 
+             FROM business_profiles bp 
+             LEFT JOIN users u ON bp.user_id = u.id 
+             WHERE bp.slug = ? OR bp.subdomain = ? OR bp.qr_token = ?`,
             [slug, slug, slug]
         );
 
@@ -32,7 +35,7 @@ export async function getProfileBySlug(slug) {
             headerConfig: safeJsonParse(row.header_config),
             footerConfig: safeJsonParse(row.footer_config),
             platforms: safeJsonParse(row.platforms),
-            languagePref: safeJsonParse(row.language_pref) || ['English'],
+            languagePref: commaSepratedStringToArray(row.language_pref) || ['English'],
             promptConfig: safeJsonParse(row.prompt_config),
             address: row.address,
             city: row.city,
@@ -46,7 +49,9 @@ export async function getProfileBySlug(slug) {
             description: row.description,
             keywords: row.keywords,
             subdomain: row.subdomain,
-            qr_token: row.qr_token
+            subdomain: row.subdomain,
+            qr_token: row.qr_token,
+            isActive: row.is_active !== 0 && row.is_active !== null // Default to true if null, false only if explicitly 0
         };
     } catch (error) {
         console.error("Database query error:", error);
@@ -65,4 +70,10 @@ function safeJsonParse(value) {
     } catch {
         return null;
     }
+}
+
+
+function commaSepratedStringToArray(str) {
+    if (!str) return [];
+    return str.split(',').map(s => s.trim());
 }

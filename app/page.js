@@ -108,7 +108,7 @@ function ReviewPageContent() {
   const generateReviewsForProfile = async (profileData, currentPlatforms) => {
     try {
       // Get selected languages
-      let languages = profileData.languagePref || profileData.language_pref || ['English'];
+      let languages = profileData.languagePref;
       if (typeof languages === 'string') {
         try { languages = JSON.parse(languages); } catch { languages = [languages]; }
       }
@@ -188,6 +188,7 @@ function ReviewPageContent() {
     if (lower.includes('trustpilot')) return { primary: "#00B67A", secondary: "#F0FFF9", stars: "#00B67A", gradient: "linear-gradient(135deg, #00B67A, #00d68f)" };
     if (lower.includes('justdial')) return { primary: "#2196f3", secondary: "#e3f2fd", stars: "#ffc107", gradient: "linear-gradient(135deg, #2196f3, #1976d2)" };
     if (lower.includes('ambitionbox')) return { primary: "#6366F1", secondary: "#EEF2FF", stars: "#6366F1", gradient: "linear-gradient(135deg, #6366F1, #8B5CF6)" };
+    if (lower.includes('youtube')) return { primary: "#FF0000", secondary: "#FFEBEE", stars: "#FF0000", gradient: "linear-gradient(135deg, #FF0000, #C4302B)" };
     return { primary: "#333", secondary: "#f5f5f5", stars: "#daa520", gradient: "linear-gradient(135deg, #333, #666)" };
   };
 
@@ -247,11 +248,18 @@ function ReviewPageContent() {
               QR SCANNED SUCCESSFULLY
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+            {/* <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
               <span className="text-gray-900">We Value</span>
               <br className="md:hidden" />
               <span className="ml-2 text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #FF9F00, #E02D4C)' }}>
                 Your Feedback
+              </span>
+            </h1> */}
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+              <span className="text-gray-900">SCAN TO REVIEW</span>
+              <br className="md:hidden" />
+              <span className="ml-2 text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #FF9F00, #E02D4C)' }}>
+                IN LESS THAN 5 SEC
               </span>
             </h1>
 

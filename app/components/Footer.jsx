@@ -40,44 +40,47 @@ export default function Footer({ profile }) {
                     </div>
 
                     {/* Column 2: Quick Links */}
-                    <div>
-                        <h3 className="text-sm font-semibold leading-6 text-gray-900">Quick Links</h3>
-                        <ul role="list" className="mt-4 space-y-3">
-                            {quickLinks.length > 0 ? quickLinks.map((item, idx) => (
-                                <li key={idx}>
-                                    <a href={item.href || item.url || '#'} className="text-sm leading-6 text-gray-600 hover:text-gray-900">
-                                        {item.label || item.name}
-                                    </a>
-                                </li>
-                            )) : (
-                                <>
-                                    <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Home</a></li>
+                    {quickLinks.length > 0 &&
+                        <>
+                            <div>
+                                <h3 className="text-sm font-semibold leading-6 text-gray-900">Quick Links</h3>
+                                <ul role="list" className="mt-4 space-y-3">
+                                    {quickLinks.length > 0 ? quickLinks.map((item, idx) => (
+                                        <li key={idx}>
+                                            <a href={item.href || item.url || '#'} className="text-sm leading-6 text-gray-600 hover:text-gray-900">
+                                                {item.label || item.name}
+                                            </a>
+                                        </li>
+                                    )) : (
+                                        <>
+                                            {/* <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Home</a></li>
                                     <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">About Us</a></li>
                                     <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Services</a></li>
-                                    <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Contact</a></li>
-                                </>
-                            )}
-                        </ul>
-                    </div>
+                                    <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Contact</a></li> */}
+                                        </>
+                                    )}
+                                </ul>
+                            </div>
 
-                    {/* Column 3: Support Links (No Heading) */}
-                    <div>
-                        <ul role="list" className="mt-10 space-y-3">
-                            {supportLinks.length > 0 ? supportLinks.map((item, idx) => (
-                                <li key={idx}>
-                                    <a href={item.href || item.url || '#'} className="text-sm leading-6 text-gray-600 hover:text-gray-900">
-                                        {item.label || item.name}
-                                    </a>
-                                </li>
-                            )) : (
-                                <>
-                                    <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Help Center</a></li>
-                                    <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Privacy Policy</a></li>
-                                </>
-                            )}
-                        </ul>
-                    </div>
-
+                            {/* Column 3: Support Links (No Heading) */}
+                            <div>
+                                <ul role="list" className="mt-10 space-y-3">
+                                    {supportLinks.length > 0 ? supportLinks.map((item, idx) => (
+                                        <li key={idx}>
+                                            <a href={item.href || item.url || '#'} className="text-sm leading-6 text-gray-600 hover:text-gray-900">
+                                                {item.label || item.name}
+                                            </a>
+                                        </li>
+                                    )) : (
+                                        <>
+                                            {/* <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Help Center</a></li>
+                                    <li><a href="#" className="text-sm leading-6 text-gray-600 hover:text-gray-900">Privacy Policy</a></li> */}
+                                        </>
+                                    )}
+                                </ul>
+                            </div>
+                        </>
+                    }
                     {/* Column 4: Contact Us */}
                     <div>
                         <h3 className="text-sm font-semibold leading-6 text-gray-900">Contact Us</h3>

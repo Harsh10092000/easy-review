@@ -29,22 +29,24 @@ export default function Header({ profile }) {
 
                 {/* Mobile Menu Button */}
                 <div className="flex lg:hidden">
-                    <button
-                        type="button"
-                        className="-m-2.5 inline-flex items-center justify-center rounded-lg p-2.5 text-gray-700 hover:bg-gray-100 transition-colors"
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    >
-                        <span className="sr-only">Toggle menu</span>
-                        {mobileMenuOpen ? (
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        ) : (
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                            </svg>
-                        )}
-                    </button>
+                    {links && links.length > 0 &&
+                        <button
+                            type="button"
+                            className="-m-2.5 inline-flex items-center justify-center rounded-lg p-2.5 text-gray-700 hover:bg-gray-100 transition-colors"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        >
+                            <span className="sr-only">Toggle menu</span>
+                            {mobileMenuOpen ? (
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                </svg>
+                            )}
+                        </button>
+                    }
                 </div>
 
                 {/* Desktop Links */}
@@ -61,10 +63,10 @@ export default function Header({ profile }) {
                         </a>
                     )) : (
                         <>
-                            <a href="#" className="text-sm font-semibold leading-6 text-gray-700 hover:text-blue-600 transition-colors">Home</a>
+                            {/* <a href="#" className="text-sm font-semibold leading-6 text-gray-700 hover:text-blue-600 transition-colors">Home</a>
                             <a href="#" className="text-sm font-semibold leading-6 text-gray-700 hover:text-blue-600 transition-colors">About Us</a>
                             <a href="#" className="text-sm font-semibold leading-6 text-gray-700 hover:text-blue-600 transition-colors">Services</a>
-                            <a href="#" className="text-sm font-semibold leading-6 text-gray-700 hover:text-blue-600 transition-colors">Contact Us</a>
+                            <a href="#" className="text-sm font-semibold leading-6 text-gray-700 hover:text-blue-600 transition-colors">Contact Us</a> */}
                         </>
                     )}
                 </div>
@@ -87,10 +89,10 @@ export default function Header({ profile }) {
                             </a>
                         )) : (
                             <>
-                                <a href="#" className="block text-base font-medium text-gray-700 py-2">Home</a>
+                                {/* <a href="#" className="block text-base font-medium text-gray-700 py-2">Home</a>
                                 <a href="#" className="block text-base font-medium text-gray-700 py-2">About Us</a>
                                 <a href="#" className="block text-base font-medium text-gray-700 py-2">Services</a>
-                                <a href="#" className="block text-base font-medium text-gray-700 py-2">Contact Us</a>
+                                <a href="#" className="block text-base font-medium text-gray-700 py-2">Contact Us</a> */}
                             </>
                         )}
                     </div>
