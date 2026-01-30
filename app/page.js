@@ -21,6 +21,7 @@ function ReviewPageContent() {
   const slug = subdomain || idParam; // Subdomain takes priority, fallback to ?id=
 
   const [notFound, setNotFound] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [profile, setProfile] = useState(null);
   const [platforms, setPlatforms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +54,11 @@ function ReviewPageContent() {
       const data = await res.json();
 
       if (data.success && data.profile) {
+        if (!data.profile.isActive) {
+          setIsBlocked(true);
+          setLoading(false);
+          return;
+        }
         setProfile(data.profile);
         initializePlatforms(data.profile);
       } else {
@@ -195,6 +201,27 @@ function ReviewPageContent() {
   const currentProfile = profile || staticProfile;
   const isSinglePlatform = platforms.length === 1;
 
+  if (isBlocked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 text-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
+          <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Account Deactivated</h1>
+          <p className="text-gray-600 mb-6">
+            This account is currently inactive. If you are the owner, please contact support or renew your subscription.
+          </p>
+          <div className="text-sm text-gray-500 font-medium bg-gray-50 py-3 rounded-lg border border-gray-100">
+            Contact Support for assistance
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (notFound) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 text-center">
@@ -259,7 +286,7 @@ function ReviewPageContent() {
               <span className="text-gray-900">SCAN TO REVIEW</span>
               <br className="md:hidden" />
               <span className="ml-2 text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #FF9F00, #E02D4C)' }}>
-                IN LESS THAN 5 SEC
+                IN LESS THAN <span>5</span> SEC
               </span>
             </h1>
 
@@ -300,7 +327,7 @@ function ReviewPageContent() {
 
 
                 {/* Mobile Tabs */}
-                <div className="md:hidden sticky top-[60px] z-40 bg-white/95 backdrop-blur-sm mb-6 border-b border-gray-100 -mx-4 px-4 pt-4 pb-2">
+                <div className="md:hidden sticky top-[50px] z-40 bg-white/95 backdrop-blur-sm mb-6 border-b border-gray-100 -mx-4 px-4 pt-4 pb-2">
                   <div className="overflow-x-auto pb-2 scrollbar-hide pt-2 pl-1">
                     <div className="flex gap-3">
                       {platforms.map((platform) => (
