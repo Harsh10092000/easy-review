@@ -10,7 +10,7 @@ import { siteConfig } from "./data/siteConfig";
 import { staticReviewsByPlatform } from "./data/reviewsData";
 
 // Backend URL - Update for production
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8010";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://smartreviewpanelapi.bizease.com/";
 
 function ReviewPageContent() {
   const searchParams = useSearchParams();
