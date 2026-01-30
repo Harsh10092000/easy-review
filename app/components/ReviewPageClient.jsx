@@ -95,7 +95,7 @@ export default function ReviewPageClient({ initialProfile, isNotFound }) {
             const query = new URLSearchParams({
                 businessName: profileData.businessName || profileData.business_name,
                 businessType: profileData.businessType || profileData.business_type || 'business',
-                ownerName: profileData.promptConfig?.ownerName || '',
+                ownerName: (profileData.promptConfig?.ownerNames || []).join(', ') || profileData.promptConfig?.ownerName || '',
                 language: lang,
                 location: [profileData.city, profileData.state].filter(Boolean).join(', ') || 'India',
                 description: profileData.description || '',

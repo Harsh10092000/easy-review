@@ -50,7 +50,7 @@ function ReviewPageContent() {
   const fetchProfile = async (profileSlug) => {
     try {
       // Use internal Next.js API route (connects directly to DB)
-      const res = await fetch(`/api/profile/${profileSlug}`);
+      const res = await fetch(`/api/profile/${profileSlug}`, { cache: 'no-store' });
       const data = await res.json();
 
       if (data.success && data.profile) {
@@ -59,6 +59,8 @@ function ReviewPageContent() {
           setLoading(false);
           return;
         }
+        console.log("DEBUG: Profile loaded:", data.profile);
+        console.log("DEBUG: Prompt Config:", data.profile.promptConfig);
         setProfile(data.profile);
         initializePlatforms(data.profile);
       } else {
@@ -128,7 +130,7 @@ function ReviewPageContent() {
       const query = new URLSearchParams({
         businessName: profileData.businessName || profileData.business_name,
         businessType: profileData.businessType || profileData.business_type || 'business',
-        ownerName: profileData.promptConfig?.ownerName || '',
+        ownerName: (profileData.promptConfig?.ownerNames || []).join(', ') || profileData.promptConfig?.ownerName || '',
         language: lang,
         location: [profileData.city, profileData.state].filter(Boolean).join(', ') || 'India',
         description: profileData.description || '',
