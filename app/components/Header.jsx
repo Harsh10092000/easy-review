@@ -18,7 +18,7 @@ export default function Header({ profile }) {
 
                 {/* Logo Section */}
                 <div className="flex lg:flex-1">
-                    <a href="#" className="-m-1.5 p-1.5 flex items-center gap-3">
+                    <a href={profile?.website || '#'} target={profile?.website ? "_blank" : "_self"} rel="noopener noreferrer" className="-m-1.5 p-1.5 flex items-center gap-3">
                         {logo ? (
                             <img className="h-10 w-auto object-contain" src={logo} alt={businessName} />
                         ) : (

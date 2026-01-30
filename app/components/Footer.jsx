@@ -29,9 +29,13 @@ export default function Footer({ profile }) {
                     <div className="space-y-4">
                         {/* Logo */}
                         {logo ? (
-                            <img className="h-10 w-auto object-contain" src={logo} alt={businessName} />
+                            <a href={profile?.website || '#'} target={profile?.website ? "_blank" : "_self"} rel="noopener noreferrer" className="block">
+                                <img className="h-10 w-auto object-contain" src={logo} alt={businessName} />
+                            </a>
                         ) : (
-                            <span className="text-xl font-bold text-gray-900">{businessName}</span>
+                            <a href={profile?.website || '#'} target={profile?.website ? "_blank" : "_self"} rel="noopener noreferrer" className="text-xl font-bold text-gray-900 block">
+                                {businessName}
+                            </a>
                         )}
 
                         <p className="text-sm leading-6 text-gray-600">

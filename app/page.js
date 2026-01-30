@@ -61,6 +61,12 @@ function ReviewPageContent() {
         }
         console.log("DEBUG: Profile loaded:", data.profile);
         console.log("DEBUG: Prompt Config:", data.profile.promptConfig);
+
+        // Normalize Logo URL (Handle relative paths from backend)
+        if (data.profile.logo && data.profile.logo.startsWith('/')) {
+          data.profile.logo = `${BACKEND_URL}${data.profile.logo}`;
+        }
+
         setProfile(data.profile);
         initializePlatforms(data.profile);
       } else {
