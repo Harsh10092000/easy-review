@@ -49,9 +49,10 @@ export async function getProfileBySlug(slug) {
             description: row.description,
             keywords: row.keywords,
             subdomain: row.subdomain,
-            subdomain: row.subdomain,
             qr_token: row.qr_token,
-            isActive: row.is_active !== 0 && row.is_active !== null // Default to true if null, false only if explicitly 0
+            isActive: row.is_active !== 0 && row.is_active !== null, // Default to true if null, false only if explicitly 0
+            whatsappNumber: (safeJsonParse(row.footer_config))?.whatsappNumber,
+            whatsappMessage: (safeJsonParse(row.footer_config))?.whatsappMessage
         };
     } catch (error) {
         console.error("Database query error:", error);

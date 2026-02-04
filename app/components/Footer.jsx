@@ -164,8 +164,17 @@ export default function Footer({ profile }) {
                     </div>
                 </div>
 
+                {/* Disclaimer */}
+                <div className="mt-12 border-t border-gray-200 pt-8 pb-4">
+                    <p className="text-xs text-gray-500 text-center leading-relaxed max-w-4xl mx-auto">
+                        The reviews or comments shared are only sample ideas for reference. CAL INFO does not promote fake or misleading reviews.
+                        Users should post reviews only based on their real experience with a business or service.
+                        Compliance with platform policies and applicable laws is the user’s responsibility.
+                    </p>
+                </div>
+
                 {/* Bottom Bar */}
-                <div className="mt-12 border-t border-gray-200 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <p className="text-sm text-gray-600">
                         © {new Date().getFullYear()} <a href="https://bizease.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">BizEase</a>. All rights reserved.
                     </p>

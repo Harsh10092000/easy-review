@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import WhatsAppButton from "./components/WhatsAppButton";
 import PlatformCard, { PlatformIcon } from "./components/PlatformCard";
 import SaveContactButton from "./components/SaveContactButton";
 import { siteConfig } from "./data/siteConfig";
@@ -400,6 +401,10 @@ function ReviewPageContent() {
       </main>
 
       <Footer profile={currentProfile} />
+      <WhatsAppButton
+        number={currentProfile?.whatsappNumber}
+        message={currentProfile?.whatsappMessage}
+      />
     </div>
   );
 }
